@@ -1,0 +1,196 @@
+<title>Operation Meridian Map</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: case-board. Map left, briefing + network right; stacks on phones. */
+:root{
+  --bg:#e7e9e4; --panel:#f4f3ee; --ink:#1b2830; --muted:#5b6a72; --line:#c5cbc6;
+  --water:#d3dde0; --land:#f7f6f0; --grid:#e3e2d9;
+  --hot:#c2410c; --mid:#b7791f; --low:#0f766e;
+  --display:'Big Shoulders Display','Arial Narrow',sans-serif;
+  --body:'IBM Plex Sans',system-ui,sans-serif;
+  --mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#0f161b; --panel:#17212a; --ink:#e3e8e6; --muted:#8fa0a8; --line:#2a3944;
+  --water:#0b1217; --land:#1c2933; --grid:#22313c;
+  --hot:#ff7a45; --mid:#e3b341; --low:#4fd1c5; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f161b; --panel:#17212a; --ink:#e3e8e6; --muted:#8fa0a8; --line:#2a3944;
+  --water:#0b1217; --land:#1c2933; --grid:#22313c;
+  --hot:#ff7a45; --mid:#e3b341; --low:#4fd1c5; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:15px/1.5 var(--body);padding-inline:16px;padding-block:20px}
+.wrap{max-width:1180px;margin:0 auto;display:grid;gap:16px}
+header{display:flex;flex-wrap:wrap;gap:8px 20px;align-items:end;justify-content:space-between}
+h1{font:800 clamp(34px,6vw,56px)/.95 var(--display);text-transform:uppercase;letter-spacing:.01em;margin:0;text-wrap:balance}
+.stamp{font:500 12px var(--mono);letter-spacing:.08em;text-transform:uppercase;border:1.5px solid var(--hot);color:var(--hot);padding:4px 8px;border-radius:2px}
+.sub{color:var(--muted);margin:6px 0 0;max-width:62ch}
+main{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:860px){main{grid-template-columns:minmax(0,1fr)}}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:14px}
+h2{font:700 20px/1 var(--display);text-transform:uppercase;letter-spacing:.06em;margin:0 0 10px}
+.mapbox{padding:0;overflow:hidden}
+.tools{display:flex;flex-wrap:wrap;gap:6px 14px;padding:10px 14px;border-bottom:1px solid var(--line);font:12px var(--mono);color:var(--muted)}
+.tools label{display:flex;gap:6px;align-items:center;cursor:pointer}
+svg{display:block;width:100%;height:auto}
+.zone{cursor:pointer}
+.zone:focus-visible circle.core,.zone.sel circle.core{stroke:var(--ink);stroke-width:2.5}
+.pulse{transform-box:fill-box;transform-origin:center;animation:p 2.8s ease-out infinite}
+@keyframes p{0%{transform:scale(.6);opacity:.55}100%{transform:scale(2.2);opacity:0}}
+@media(prefers-reduced-motion:reduce){.pulse{animation:none;opacity:.25}}
+.legend{display:flex;flex-wrap:wrap;gap:6px 16px;padding:10px 14px;border-top:1px solid var(--line);font:12px var(--mono);color:var(--muted)}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:6px;vertical-align:-1px}
+.brief .meta{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px;font:12px var(--mono)}
+.chip{border:1px solid var(--line);padding:2px 8px;border-radius:99px}
+.brief p{margin:0 0 8px}
+.zonelist{display:grid;gap:6px;margin:0;padding:0;list-style:none}
+.zonelist button{all:unset;box-sizing:border-box;width:100%;display:flex;gap:10px;align-items:center;padding:7px 8px;border:1px solid var(--line);border-radius:3px;cursor:pointer;font-size:14px}
+.zonelist button:hover,.zonelist button.sel{background:var(--bg)}
+.zonelist button:focus-visible{outline:2px solid var(--ink)}
+.zonelist .lv{margin-left:auto;font:12px var(--mono);color:var(--muted)}
+.right{display:grid;gap:16px;min-width:0}
+.net text{font:500 10.5px var(--mono);fill:var(--ink)}
+.foot{font:12px var(--mono);color:var(--muted)}
+</style>
+
+<div class="wrap">
+<header>
+  <div>
+    <h1>Operation Meridian</h1>
+    <p class="sub">Story-world surveillance map for the screenplay. Joint task force, six zones under watch, one lead network spreading between them.</p>
+  </div>
+  <span class="stamp">Fiction · invented task force, people and cases</span>
+</header>
+
+<main>
+  <section class="panel mapbox" aria-label="Map of Manhattan with fictional surveillance zones">
+    <div class="tools" role="group" aria-label="Map layers">
+      <label><input type="checkbox" id="lz" checked> Watch zones</label>
+      <label><input type="checkbox" id="lr" checked> Patrol routes</label>
+      <label><input type="checkbox" id="ll" checked> Lead links</label>
+    </div>
+    <svg id="map" viewBox="0 0 520 900" role="img" aria-label="Stylized map of Manhattan"></svg>
+    <div class="legend">
+      <span><i class="dot" style="background:var(--hot)"></i>Priority 1</span>
+      <span><i class="dot" style="background:var(--mid)"></i>Priority 2</span>
+      <span><i class="dot" style="background:var(--low)"></i>Priority 3</span>
+      <span>Dashed: patrol route · Line: shared contact</span>
+    </div>
+  </section>
+
+  <div class="right">
+    <section class="panel brief" id="brief" aria-live="polite"></section>
+    <section class="panel">
+      <h2>Watch zones</h2>
+      <ul class="zonelist" id="zl"></ul>
+    </section>
+    <section class="panel">
+      <h2>Who knows whom</h2>
+      <svg class="net" id="net" viewBox="0 0 440 250" role="img" aria-label="Fictional relationship web between invented characters"></svg>
+      <p class="foot">Names are invented. Any match to a real person is accidental.</p>
+    </section>
+  </div>
+</main>
+</div>
+
+<script>
+(function(){
+  var NS='http://www.w3.org/2000/svg';
+  // local map coords (untilted) -> screen; Manhattan's north end leans right
+  function P(x,y){return [x-y*0.3+300,y+10];}
+  function el(t,a,parent){var e=document.createElementNS(NS,t);for(var k in a)e.setAttribute(k,a[k]);if(parent)parent.appendChild(e);return e;}
+
+  var island=[[150,30],[205,25],[215,70],[235,140],[268,230],[285,330],[290,420],[280,520],[262,610],[250,690],[238,760],[215,830],[190,850],[165,830],[150,790],[135,740],[118,690],[110,640],[122,580],[140,520],[150,440],[160,360],[165,290],[150,230],[140,150],[135,90]];
+
+  var zones=[
+    {id:'wh',name:'Washington Heights',x:190,y:105,lv:2,kind:'Fixed observation',
+     note:'A pharmacy-delivery van parks on the same block every Tuesday. Analyst Dana Okafor notices the plates never repeat.',
+     beat:'Act 1: the team first sees the pattern here.'},
+    {id:'hr',name:'Harlem',x:222,y:205,lv:1,kind:'Undercover contact',
+     note:'Detective Ray Calloway meets a nervous informant in a laundromat. The informant names a middleman, "Mercer", and then stops answering calls.',
+     beat:'Act 1 turn: the informant disappears.'},
+    {id:'ues',name:'Upper East Side',x:238,y:330,lv:3,kind:'Financial review',
+     note:'A federal agent traces cash deposits through a string of small galleries. Nothing illegal on paper, which is the problem.',
+     beat:'Act 2: the money trail points downtown.'},
+    {id:'mid',name:'Midtown',x:205,y:500,lv:1,kind:'Joint command post',
+     note:'The task force works from a rented floor above a travel agency. Wall of photos, string, and a coffee machine that has been broken for months.',
+     beat:'Home base. Most dialogue scenes happen here.'},
+    {id:'vil',name:'Greenwich Village',x:166,y:655,lv:2,kind:'Roaming surveillance',
+     note:'Two officers rotate through cafes and a late-night record shop, watching who Mercer talks to between sets at a jazz club.',
+     beat:'Act 2: the first photo of Mercer.'},
+    {id:'les',name:'Lower East Side',x:226,y:735,lv:1,kind:'Wire room',
+     note:'A tiny apartment with headphones, a space heater and a rule that nobody speaks above a whisper. A single dropped phrase changes the case.',
+     beat:'Act 3: the break everyone has been waiting for.'}
+  ];
+  var routes=[['hr','ues','mid'],['mid','vil','les'],['wh','hr']];
+  var links=[['hr','vil'],['mid','les'],['ues','les'],['hr','mid']];
+  var color={1:'var(--hot)',2:'var(--mid)',3:'var(--low)'};
+  var byId={};zones.forEach(function(z){byId[z.id]=z;z.p=P(z.x,z.y);});
+
+  var svg=document.getElementById('map');
+  el('rect',{x:0,y:0,width:520,height:900,fill:'var(--water)'},svg);
+  var pts=island.map(function(a){return P(a[0],a[1]).join(',');}).join(' ');
+  var clip=el('clipPath',{id:'isl'},svg);el('polygon',{points:pts},clip);
+  el('polygon',{points:pts,fill:'var(--land)',stroke:'var(--line)','stroke-width':2},svg);
+  var g=el('g',{'clip-path':'url(#isl)'},svg);
+  for(var y=0;y<=900;y+=18){var a=P(100,y),b=P(320,y);el('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:'var(--grid)','stroke-width':1},g);}
+  for(var x=110;x<=320;x+=20){var a2=P(x,0),b2=P(x,900);el('line',{x1:a2[0],y1:a2[1],x2:b2[0],y2:b2[1],stroke:'var(--grid)','stroke-width':1},g);}
+  // park block, purely decorative
+  var park=[[190,380],[210,380],[210,470],[190,470]].map(function(a){return P(a[0],a[1]).join(',');}).join(' ');
+  el('polygon',{points:park,fill:'var(--low)',opacity:.18},g);
+
+  var gl=el('g',{id:'g-links'},svg),gr=el('g',{id:'g-routes'},svg),gz=el('g',{id:'g-zones'},svg);
+  links.forEach(function(l){var a=byId[l[0]].p,b=byId[l[1]].p;
+    el('path',{d:'M'+a+' Q'+((a[0]+b[0])/2+30)+','+((a[1]+b[1])/2)+' '+b,fill:'none',stroke:'var(--ink)','stroke-width':1.4,opacity:.55},gl);});
+  routes.forEach(function(r){var d=r.map(function(id,i){return(i?'L':'M')+byId[id].p;}).join(' ');
+    el('path',{d:d,fill:'none',stroke:'var(--muted)','stroke-width':2,'stroke-dasharray':'6 5','stroke-linecap':'round'},gr);});
+
+  zones.forEach(function(z){
+    var g1=el('g',{class:'zone',tabindex:0,role:'button','aria-label':z.name+', priority '+z.lv,'data-id':z.id},gz);
+    el('circle',{cx:z.p[0],cy:z.p[1],r:14,fill:color[z.lv],class:'pulse'},g1);
+    el('circle',{cx:z.p[0],cy:z.p[1],r:9,fill:color[z.lv],class:'core',stroke:'var(--land)','stroke-width':2},g1);
+    var t=el('text',{x:z.p[0]+16,y:z.p[1]+4,fill:'var(--ink)','font-size':12,'font-family':'IBM Plex Mono, monospace','font-weight':500,'paint-order':'stroke',stroke:'var(--land)','stroke-width':3},g1);
+    t.textContent=z.name;
+  });
+  var tx=el('text',{x:24,y:870,fill:'var(--muted)','font-size':11,'font-family':'IBM Plex Mono, monospace','letter-spacing':'.08em'},svg);
+  tx.textContent='SCHEMATIC · NOT TO SCALE · FICTIONAL';
+
+  // briefing + list
+  var brief=document.getElementById('brief'),zl=document.getElementById('zl');
+  function show(id){
+    var z=byId[id];
+    brief.innerHTML='';
+    var h=document.createElement('h2');h.textContent=z.name;brief.appendChild(h);
+    var m=document.createElement('div');m.className='meta';
+    [z.kind,'Priority '+z.lv].forEach(function(s){var c=document.createElement('span');c.className='chip';c.textContent=s;m.appendChild(c);});
+    brief.appendChild(m);
+    var p1=document.createElement('p');p1.textContent=z.note;brief.appendChild(p1);
+    var p2=document.createElement('p');p2.className='foot';p2.textContent=z.beat;brief.appendChild(p2);
+    document.querySelectorAll('.zone').forEach(function(n){n.classList.toggle('sel',n.dataset.id===id);});
+    zl.querySelectorAll('button').forEach(function(n){n.classList.toggle('sel',n.dataset.id===id);});
+  }
+  zones.forEach(function(z){
+    var li=document.createElement('li'),b=document.createElement('button');b.dataset.id=z.id;
+    b.innerHTML='<i class="dot" style="background:'+color[z.lv]+';margin:0"></i><span></span><span class="lv"></span>';
+    b.children[1].textContent=z.name;b.children[2].textContent='P'+z.lv;
+    b.onclick=function(){show(z.id);};li.appendChild(b);zl.appendChild(li);
+  });
+  gz.addEventListener('click',function(e){var n=e.target.closest('.zone');if(n)show(n.dataset.id);});
+  gz.addEventListener('keydown',function(e){if(e.key==='Enter'||e.key===' '){var n=e.target.closest('.zone');if(n){e.preventDefault();show(n.dataset.id);}}});
+  [['lz','g-zones'],['lr','g-routes'],['ll','g-links']].forEach(function(p){
+    document.getElementById(p[0]).onchange=function(){document.getElementById(p[1]).style.display=this.checked?'':'none';};
+  });
+  show('hr');
+
+  // relationship web (all invented)
+  var ns=document.getElementById('net');
+  var nodes={mer:[220,40,'Mercer','x'],vee:[90,100,'Vee Dalton','m'],tom:[350,100,'Tomás Reyes','m'],
+    nur:[140,200,'Nuru Adeyemi','l'],jun:[300,200,'June Park','l'],inf:[40,200,'Informant "Birdie"','i']};
+  var edges=[['mer','vee'],['mer','tom'],['vee','nur'],['tom','jun'],['nur','jun'],['inf','vee']];
+  var nc={x:'var(--hot)',m:'var(--mid)',l:'var(--low)',i:'var(--muted)'};
+  edges.forEach(function(e){var a=nodes[e[0]],b=nodes[e[1]];el('line',{x1:a[0],y1:a[1],x2:b[0],y2:b[1],stroke:'var(--line)','stroke-width':2},ns);});
+  for(var k in nodes){var n=nodes[k];
+    el('circle',{cx:n[0],cy:n[1],r:9,fill:nc[n[3]],stroke:'var(--panel)','stroke-width':2},ns);
+    var t2=el('text',{x:n[0],y:n[1]+(n[1]<60?-15:24),'text-anchor':'middle'},ns);t2.textContent=n[2];}
+})();
+</script>

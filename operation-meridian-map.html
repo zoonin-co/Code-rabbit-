@@ -1,3 +1,8 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Operation Meridian Map</title>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
 <style>
@@ -63,6 +68,8 @@ h2{font:700 20px/1 var(--display);text-transform:uppercase;letter-spacing:.06em;
 .net text{font:500 10.5px var(--mono);fill:var(--ink)}
 .foot{font:12px var(--mono);color:var(--muted);margin:0}
 </style>
+</head>
+<body>
 
 <div class="wrap">
 <header>
@@ -283,3 +290,5 @@ h2{font:700 20px/1 var(--display);text-transform:uppercase;letter-spacing:.06em;
     var t2=el('text',{x:n[0],y:n[1]+(n[1]<60?-15:24),'text-anchor':'middle'},ns);t2.textContent=n[2];}
 })();
 </script>
+</body>
+</html>

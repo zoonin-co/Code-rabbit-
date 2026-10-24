@@ -14,3 +14,6 @@ An interactive, single-page story-world map made for a screenplay. It shows a **
 
 ## How to open it
 No build or install is needed. Download or clone the repo, then open `operation-meridian-map.html` in any modern browser (double-click it, or drag it into a browser window). An internet connection is only needed to load the Google Fonts; without one it falls back to system fonts.
+
+## View online
+https://zoonin-co.github.io/Code-rabbit-/
